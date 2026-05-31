@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioTrack Pro</title>
+    <title>InjTrk</title>
     <!-- Web App Manifest for PWA installation -->
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkJpb1RyYWNrIFBybyIsCiAgInNob3J0X25hbWUiOiAiQmlvVHJhY2siLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBiMGYxOSIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU2ZmYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8zMDAzLzMwMDMyMzgucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
     <meta name="theme-color" content="#0b0f19">
@@ -339,7 +339,7 @@
 <body>
 
     <header>
-        <h1 id="app-title">BioTrack Pro</h1>
+        <h1 id="app-title">InjTrk</h1>
     </header>
 
     <div class="container">
@@ -543,7 +543,7 @@
     <script>
         // ================= DATABASE ENGINE (IndexedDB) =================
         let db;
-        const dbRequest = indexedDB.open("BioTrackDB", 1);
+        const dbRequest = indexedDB.open("InjTrkDB", 1);
 
         dbRequest.onupgradeneeded = function(e) {
             let database = e.target.result;
