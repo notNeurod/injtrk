@@ -176,11 +176,6 @@
             </div>
 
             <div class="card">
-                <div class="card-title">Gewichtsverlauf</div>
-                <canvas id="weightChart" height="200"></canvas>
-            </div>
-
-            <div class="card">
                 <div class="card-title">Schnell-Tracker</div>
                 <div class="grid-2" style="margin-bottom: 16px;">
                     <div>
@@ -204,15 +199,16 @@
                     <button class="btn-secondary" style="margin-top:0;" onclick="addCustomWater()">Hinzufügen</button>
                 </div>
             </div>
+
             <div class="card">
                 <div class="card-title">Gewicht & Wasser Verlauf</div>
-                <canvas id="weightChart" height="150" style="margin-bottom: 20px;"></canvas>
-                <canvas id="waterChart" height="150"></canvas>
+                <canvas id="weightChartMain" height="150" style="margin-bottom: 20px;"></canvas>
+                <canvas id="waterChartMain" height="150"></canvas>
             </div>
 
             <div class="card">
-                <div class="card-title">Kalorien-Historie</div>
-                <canvas id="nutritionChart" height="200"></canvas>
+                <div class="card-title">Makro- & Kalorien-Historie</div>
+                <canvas id="nutritionChart" height="250"></canvas>
             </div>
         </div>
         
@@ -317,6 +313,9 @@
             <div class="card">
                 <div class="card-title">Eigenes Essen eintragen <button class="btn-secondary" style="width:auto; padding:4px 8px; margin:0; font-size:12px;" onclick="toggleElement('custom-food-form')">Öffnen</button></div>
                 <div id="custom-food-form" style="display:none; margin-top:12px;">
+                    <div style="font-size: 11px; color: var(--accent-warning); margin-bottom: 10px;">
+                        ⚠️ <b>Wichtig:</b> Bitte gib die Kalorien und Makros immer pro 100g (bzw. 100ml) an! Das System berechnet die Gesamtmenge später automatisch.
+                    </div>
                     <input type="text" id="cf-name" placeholder="Name" class="form-group">
                     <div class="grid-2 form-group">
                         <input type="number" id="cf-kcal" placeholder="Kcal">
@@ -424,7 +423,7 @@
 
         // ================= DATABASE ENGINE =================
         let db;
-        const dbRequest = indexedDB.open("InjTrkDB_v2", 2); // Bumped version for safety
+        const dbRequest = indexedDB.open("InjTrkDB_v2", 2); 
 
         dbRequest.onupgradeneeded = function(e) {
             let database = e.target.result;
@@ -441,7 +440,10 @@
         let selectedInjectionSite = "";
         let currentScannedProduct = null; 
         let html5QrcodeScanner = null;
+        
         let weightChartInstance = null;
+        let waterChartInstance = null;
+        let nutritionChartInstance = null;
 
         function getTodayDateStr() { return new Date().toISOString().split('T')[0]; }
 
@@ -825,57 +827,102 @@
             };
         }
 
+        // ================= CHART RENDERING =================
         function renderWeightChart(labels, data) {
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            new Chart(ctx, {
+            const ctx = document.getElementById('weightChartMain').getContext('2d');
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
+            if (weightChartInstance) weightChartInstance.destroy();
+            
+            weightChartInstance = new Chart(ctx, {
                 type: 'line',
-                data: { labels: labels, datasets: [{ label: 'Gewicht', data: data, borderColor: '#0056ff', tension: 0.3 }] },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                data: { labels: labels, datasets: [{ label: 'Gewicht (kg)', data: data, borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 3 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } } }
             });
         }
 
         function renderWaterChart(labels, data) {
-            const ctx = document.getElementById('waterChart').getContext('2d');
-            new Chart(ctx, {
+            const ctx = document.getElementById('waterChartMain').getContext('2d');
+            if (waterChartInstance) waterChartInstance.destroy();
+            
+            waterChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Wasser (ml)', data: data, backgroundColor: '#10b981' }] },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                data: { labels: labels, datasets: [{ label: 'Wasser (ml)', data: data, backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } } }
             });
         }
 
-        function renderNutritionChart(labels, data) {
+        function renderNutritionChart(labels, dataKcal, dataP, dataC, dataF) {
             const ctx = document.getElementById('nutritionChart').getContext('2d');
-            new Chart(ctx, {
+            if (nutritionChartInstance) nutritionChartInstance.destroy();
+            
+            nutritionChartInstance = new Chart(ctx, {
                 type: 'line',
-                data: { labels: labels, datasets: [{ label: 'Kcal', data: data, borderColor: '#f59e0b', tension: 0.3 }] },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                data: { 
+                    labels: labels, 
+                    datasets: [
+                        { label: 'Kcal', data: dataKcal, borderColor: '#f59e0b', tension: 0.3, yAxisID: 'y' },
+                        { label: 'Protein (g)', data: dataP, borderColor: '#ef4444', tension: 0.3, yAxisID: 'y1' },
+                        { label: 'Carbs (g)', data: dataC, borderColor: '#3b82f6', tension: 0.3, yAxisID: 'y1' },
+                        { label: 'Fett (g)', data: dataF, borderColor: '#10b981', tension: 0.3, yAxisID: 'y1' }
+                    ] 
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { 
+                        legend: { display: true, labels: { color: '#9ca3af', boxWidth: 12, font: { size: 10 } } } 
+                    },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af' } },
+                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#f59e0b' } },
+                        y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#9ca3af' }, grid: { drawOnChartArea: false } }
+                    }
+                }
             });
         }
 
         function updateCharts() {
+            if (!db) return;
             let tx = db.transaction(["weight", "water", "nutrition"], "readonly");
             
-            // 1. Gewicht-Daten holen
+            // 1. Gewicht
             tx.objectStore("weight").getAll().onsuccess = (e) => {
-                let data = e.target.result.sort((a,b) => a.date.localeCompare(b.date)).slice(-7);
-                renderWeightChart(data.map(d => d.date), data.map(d => d.weight_kg));
+                let all = e.target.result.sort((a,b) => a.date.localeCompare(b.date));
+                let data = all.slice(-14); 
+                if (data.length > 0) {
+                    renderWeightChart(data.map(d => d.date.substring(5)), data.map(d => d.weight_kg));
+                }
             };
 
-            // 2. Wasser & Nutrition Daten holen
+            // 2. Wasser
             tx.objectStore("water").getAll().onsuccess = (e) => {
                 let waterData = e.target.result.sort((a,b) => a.date.localeCompare(b.date)).slice(-7);
-                renderWaterChart(waterData.map(d => d.date), waterData.map(d => d.amount_ml));
+                if (waterData.length > 0) {
+                    renderWaterChart(waterData.map(d => d.date.substring(5)), waterData.map(d => d.amount_ml));
+                }
             };
 
+            // 3. Nutrition
             tx.objectStore("nutrition").getAll().onsuccess = (e) => {
                 let all = e.target.result;
                 let grouped = {};
                 all.forEach(i => {
                     if(!grouped[i.date]) grouped[i.date] = {kcal:0, p:0, c:0, f:0};
-                    grouped[i.date].kcal += i.calories;
+                    grouped[i.date].kcal += i.calories || 0;
+                    grouped[i.date].p += i.protein || 0;
+                    grouped[i.date].c += i.carbs || 0;
+                    grouped[i.date].f += i.fat || 0;
                 });
+                
                 let dates = Object.keys(grouped).sort().slice(-7);
-                renderNutritionChart(dates, dates.map(d => grouped[d].kcal));
+                if (dates.length > 0) {
+                    renderNutritionChart(
+                        dates.map(d => d.substring(5)), 
+                        dates.map(d => grouped[d].kcal),
+                        dates.map(d => grouped[d].p),
+                        dates.map(d => grouped[d].c),
+                        dates.map(d => grouped[d].f)
+                    );
+                }
             };
         }
         
@@ -888,13 +935,6 @@
             txWeight.objectStore("weight").getAll().onsuccess = function(ev) {
                 let all = ev.target.result;
                 document.getElementById("dash-weight").innerText = all.length > 0 ? all[all.length-1].weight_kg + " kg" : "-- kg";
-                
-                // Update Graph
-                if(all.length > 0) {
-                    let labels = all.slice(-14).map(d => d.date.substring(5)); // last 14 entries, MM-DD
-                    let data = all.slice(-14).map(d => d.weight_kg);
-                    renderWeightChart(labels, data);
-                }
             };
 
             let txWater = db.transaction(["water"], "readonly");
@@ -927,17 +967,8 @@
                 document.getElementById("bar-c").style.width = `${Math.min(100, (totC / 250) * 100)}%`;
                 document.getElementById("bar-f").style.width = `${Math.min(100, (totF / 80) * 100)}%`;
             };
-        }
 
-        function renderWeightChart(labels, data) {
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            const color = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
-            if(weightChartInstance) weightChartInstance.destroy();
-            weightChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: labels, datasets: [{ label: 'kg', data: data, borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 3 }] },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } } }
-            });
+            updateCharts();
         }
 
         // ================= CACHE & THEME =================
@@ -961,7 +992,7 @@
             const selected = themes[theme] || themes.default;
             for (let [key, value] of Object.entries(selected)) root.style.setProperty(key, value);
             localStorage.setItem('selectedColorway', theme);
-            if(weightChartInstance) refreshDashboard(); // Redraw chart to match theme color
+            if(weightChartInstance) refreshDashboard(); 
         }
 
         window.addEventListener('DOMContentLoaded', () => {
