@@ -4,109 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InjTrk</title>
-    <!-- Clean text manifest without base64 or Pro suffixes -->
     <link rel="manifest" href="data:application/json,{%22name%22:%22InjTrk%22,%22short_name%22:%22InjTrk%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230b0f19%22,%22theme_color%22:%22%230056ff%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/3003/3003238.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
     <meta name="theme-color" content="#0b0f19">
-    <!-- Camera scanner engine via CDN -->
+    
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --bg-primary: #0f0909;
-            --bg-secondary: #1a1111;
-            --bg-tertiary: #2a1b1b;
-            --accent-primary: #ef4444;
+            --bg-primary: #0b0f19;
+            --bg-secondary: #171e30;
+            --bg-tertiary: #232d45;
+            --accent-primary: #0056ff;
             --accent-success: #10b981;
             --accent-warning: #f59e0b;
-            --accent-danger: #b91c1c;
-            --text-main: #fca5a5;
-            --text-muted: #f87171;
-            --border-color: #3b2525;
+            --accent-danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #2e3b5e;
         }
 
         * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box; margin: 0; padding: 0;
+            user-select: none; -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-main);
-            padding-bottom: 80px;
-            overflow-x: hidden;
+            padding-bottom: 80px; overflow-x: hidden;
         }
 
         header {
             background-color: var(--bg-secondary);
-            padding: 16px;
-            text-align: center;
+            padding: 16px; text-align: center;
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            position: sticky; top: 0; z-index: 100;
         }
 
-        header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: #fff;
-        }
+        header h1 { font-size: 20px; font-weight: 700; color: #fff; }
 
-        .container {
-            padding: 16px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
 
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            position: fixed; bottom: 0; left: 0; right: 0;
             background-color: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            z-index: 100;
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 100;
         }
 
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 11px;
-            cursor: pointer;
-            transition: color 0.2s;
-            background: none;
-            border: none;
-            flex: 1;
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-muted); font-size: 11px;
+            cursor: pointer; background: none; border: none; flex: 1;
         }
+        .nav-item.active { color: var(--accent-primary); font-weight: bold; }
+        .nav-icon { font-size: 20px; margin-bottom: 4px; }
 
-        .nav-item.active {
-            color: var(--accent-primary);
-            font-weight: bold;
-        }
-
-        .nav-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-
-        .view {
-            display: none;
-        }
-
-        .view.active {
-            display: block;
-            animation: fadeIn 0.25s ease-out;
-        }
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.25s ease-out; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -116,207 +74,61 @@
         .card {
             background-color: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
+            border-radius: 12px; padding: 16px; margin-bottom: 16px;
         }
 
         .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #fff;
+            font-size: 16px; font-weight: 600; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center; color: #fff;
         }
 
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
 
         input, select, button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
+            width: 100%; padding: 12px; border-radius: 8px;
             border: 1px solid var(--border-color);
             background-color: var(--bg-tertiary);
-            color: var(--text-main);
-            font-size: 14px;
-            outline: none;
+            color: var(--text-main); font-size: 14px; outline: none;
         }
 
-        input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-            transform: scale(1.2);
-        }
+        input[type="checkbox"] { width: auto; margin-right: 8px; transform: scale(1.2); }
+        .checkbox-container { display: flex; align-items: center; margin-top: 8px; }
 
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            margin-top: 8px;
-        }
+        button.btn-primary { background-color: var(--accent-primary); color: white; font-weight: 600; border: none; cursor: pointer; }
+        button.btn-secondary { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); margin-top: 8px; }
+        button.btn-danger { background-color: transparent; border: 1px solid var(--accent-danger); color: var(--accent-danger); margin-top: 8px; }
 
-        button.btn-primary {
-            background-color: var(--accent-primary);
-            color: white;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 
-        button.btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--accent-primary);
-            color: var(--accent-primary);
-            margin-top: 8px;
-        }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .stat-box { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; text-align: center; }
+        .stat-val { font-size: 22px; font-weight: 700; color: #fff; margin-top: 4px; }
+        .stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+        .body-map { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .site-btn { background-color: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; }
+        .site-btn.selected { background-color: rgba(0, 86, 255, 0.2); border-color: var(--accent-primary); color: #fff; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .stat-box {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-        }
-
-        .stat-val {
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 4px;
-        }
-
-        .stat-lbl {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .body-map {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .site-btn {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .site-btn.selected {
-            background-color: rgba(0, 86, 255, 0.2);
-            border-color: var(--accent-primary);
-            color: #fff;
-        }
-
-        .vial-card {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .vial-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
+        .vial-card { background-color: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 10px; position: relative; }
+        .vial-badge { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 8px; }
         .badge-recon { background-color: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
         .badge-dry { background-color: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .badge-expired { background-color: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
 
-        .progress-bar-container {
-            background-color: var(--bg-primary);
-            border-radius: 6px;
-            height: 8px;
-            width: 100%;
-            margin-top: 8px;
-            overflow: hidden;
-        }
+        .progress-bar-container { background-color: var(--bg-primary); border-radius: 6px; height: 8px; width: 100%; margin-top: 8px; overflow: hidden; }
+        .progress-bar { background-color: var(--accent-primary); height: 100%; width: 0%; transition: width 0.3s; }
 
-        .progress-bar {
-            background-color: var(--accent-primary);
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s;
-        }
+        .water-btn { background-color: var(--bg-tertiary); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; text-align: center; }
 
-        .water-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .water-btn {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        #reader {
-            width: 100%;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .log-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 13px;
-        }
+        #reader { width: 100%; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+        .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
         .log-item:last-child { border-bottom: none; }
-
-        .macro-flex {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
+        .macro-flex { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        
+        .list-item-config { display: flex; justify-content: space-between; background: var(--bg-primary); padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; border: 1px solid var(--border-color); align-items: center;}
     </style>
 </head>
 <body>
@@ -327,29 +139,26 @@
 
     <div class="container">
 
-        <!-- ================= DASHBOARD VIEW ================= -->
         <div id="view-dashboard" class="view active">
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-lbl">Kalorien</div>
-                    <div class="stat-val" id="dash-kcal">0 / 2500</div>
+                    <div class="stat-val" id="dash-kcal">0 / 0</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-lbl">Wasser</div>
-                    <div class="stat-val" id="dash-water">0 / 3000 ml</div>
+                    <div class="stat-val" id="dash-water" style="font-size:18px;">0 / 0 ml</div>
                 </div>
-
                 <div class="stat-box">
                     <div class="stat-lbl">Gewicht</div>
                     <div class="stat-val" id="dash-weight">-- kg</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-lbl">Letzte Inj.</div>
+                    <div class="stat-lbl">Letzte Einnahme</div>
                     <div class="stat-val" style="font-size:14px; margin-top:8px;" id="dash-inj">Keine</div>
                 </div>
             </div>
 
-            <!-- Macro Progress -->
             <div class="card">
                 <div class="card-title">Tages-Makros</div>
                 <div style="margin-bottom: 8px;">
@@ -366,88 +175,84 @@
                 </div>
             </div>
 
-            <!-- Quick Track Weight & Water -->
+            <div class="card">
+                <div class="card-title">Gewichtsverlauf</div>
+                <canvas id="weightChart" height="200"></canvas>
+            </div>
+
             <div class="card">
                 <div class="card-title">Schnell-Tracker</div>
-                <div class="grid-2" style="margin-bottom: 12px;">
+                <div class="grid-2" style="margin-bottom: 16px;">
                     <div>
                         <label>Gewicht (kg)</label>
-                        <input type="number" id="quick-weight-input" step="0.1" placeholder="z.B. 82.5">
+                        <input type="number" id="quick-weight-input" step="0.1">
                     </div>
                     <div style="display: flex; align-items: flex-end;">
                         <button class="btn-primary" onclick="saveQuickWeight()">Speichern</button>
                     </div>
                 </div>
-                <label>Wasser hinzufügen</label>
-                <div class="water-buttons">
-                    <button class="water-btn" onclick="addWater(250)">+250ml</button>
-                    <button class="water-btn" onclick="addWater(500)">+500ml</button>
-                    <button class="water-btn" onclick="addWater(750)">+750ml</button>
+                
+                <label>Wasser-Tracker</label>
+                <div class="grid-4" style="margin-bottom: 8px;">
+                    <button class="water-btn" onclick="addWater(-250)" style="color: var(--accent-danger);">-250</button>
+                    <button class="water-btn" onclick="addWater(250)">+250</button>
+                    <button class="water-btn" onclick="addWater(500)">+500</button>
+                    <button class="water-btn" onclick="addWater(750)">+750</button>
+                </div>
+                <div class="grid-2">
+                    <input type="number" id="custom-water-input" placeholder="Eigene Menge (ml)">
+                    <button class="btn-secondary" style="margin-top:0;" onclick="addCustomWater()">Hinzufügen</button>
                 </div>
             </div>
         </div>
 
-        <!-- ================= PEPTIDES VIEW ================= -->
         <div id="view-peptides" class="view">
-            <!-- Inject Form -->
             <div class="card">
-                <div class="card-title">Injektion loggen</div>
+                <div class="card-title">Einnahme loggen</div>
                 <div class="form-group">
-                    <label>Substanz / Vial wählen</label>
-                    <select id="inj-vial-select">
-                    </select>
+                    <label>Präparat wählen</label>
+                    <select id="inj-vial-select"></select>
                 </div>
                 <div class="form-group">
-                    <label>Dosis (mg)</label>
-                    <input type="number" id="inj-dose" step="0.01" placeholder="z.B. 2.5 oder 0.5">
+                    <label>Dosis (mg / Einheit)</label>
+                    <input type="number" id="inj-dose" step="0.01" placeholder="z.B. 2.5 oder 1">
                 </div>
                 <div class="form-group">
-                    <label>Einstichstelle wählen</label>
-                    <div class="body-map">
-                        <div class="site-btn" onclick="selectSite(this, 'Bauch links')">Bauch links</div>
-                        <div class="site-btn" onclick="selectSite(this, 'Bauch rechts')">Bauch rechts</div>
-                        <div class="site-btn" onclick="selectSite(this, 'Oberschenkel L')">Oberschenkel L</div>
-                        <div class="site-btn" onclick="selectSite(this, 'Oberschenkel R')">Oberschenkel R</div>
-                        <div class="site-btn" onclick="selectSite(this, 'Gesäß links')">Gesäß links</div>
-                        <div class="site-btn" onclick="selectSite(this, 'Gesäß rechts')">Gesäß rechts</div>
-                    </div>
+                    <label>Einnahmeort / Stelle</label>
+                    <div class="body-map" id="dynamic-locations">
+                        </div>
                 </div>
-                <button class="btn-primary" onclick="logInjection()">Injektion Speichern</button>
+                <button class="btn-primary" onclick="logInjection()">Speichern</button>
             </div>
 
-            <!-- Vial Storage Manager -->
             <div class="card">
                 <div class="card-title">
-                    <span>Peptid-Lager (Vials)</span>
+                    <span>Lager / Kühlschrank</span>
                     <button class="btn-primary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="toggleElement('add-vial-form')">+ Neu</button>
                 </div>
 
                 <div id="add-vial-form" style="display:none; border-top:1px solid var(--border-color); padding-top:12px; margin-bottom:12px;">
                     <div class="form-group">
                         <label>Substanz Name</label>
-                        <select id="vial-name">
-                            <option value="Retatrutid">Retatrutid</option>
-                            <option value="GHK-Cu">GHK-Cu</option>
-                            <option value="Anderes Peptid">Anderes Peptid</option>
-                        </select>
+                        <select id="vial-name"></select>
                     </div>
                     <div class="grid-2">
                         <div class="form-group">
-                            <label>Gesamtmenge (mg)</label>
+                            <label>Gesamtmenge</label>
                             <input type="number" id="vial-total" step="0.1" placeholder="10">
                         </div>
                         <div class="form-group">
-                            <label>Aktueller Stand (mg)</label>
+                            <label>Aktueller Stand</label>
                             <input type="number" id="vial-current" step="0.1" placeholder="10">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Ablaufdatum</label>
+                        <label>Ablaufdatum (Manuell)</label>
                         <input type="date" id="vial-expiry">
                     </div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="vial-recon">
-                        <label for="vial-recon">Bereits rekonstituiert (angemischt)</label>
+                        <label for="vial-recon">Bereits angemischt / Trocken überspringen</label>
                     </div>
                     <button class="btn-primary" style="margin-top:12px;" onclick="addVial()">Ins Lager legen</button>
                 </div>
@@ -455,24 +260,29 @@
                 <div id="vials-list"></div>
             </div>
 
-            <!-- Recent Injections Log -->
             <div class="card">
-                <div class="card-title">Letzte Injektionen</div>
+                <div class="card-title">Letzte Logs</div>
                 <div id="injection-log-list"></div>
             </div>
         </div>
 
-        <!-- ================= NUTRITION VIEW ================= -->
         <div id="view-nutrition" class="view">
+            
+            <div class="card">
+                <button class="btn-secondary" style="margin-top:0; border-color: var(--text-muted);" onclick="toggleElement('history-modal'); loadDietHistory();">📅 Ernährungs-Historie anzeigen</button>
+                <div id="history-modal" style="display:none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <div id="history-list"></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-title">Barcode Nahrungsscan</div>
                 <div id="reader" style="display: none;"></div>
-                <button class="btn-primary" id="btn-scan" onclick="startScanner()">Kamera-Scanner starten</button>
+                <button class="btn-primary" id="btn-scan" onclick="startScanner()">Kamera starten</button>
                 <button class="btn-secondary" id="btn-stop-scan" style="display:none;" onclick="stopScanner()">Scanner stoppen</button>
                 
-                <div style="text-align: center; margin: 10px 0; color: var(--text-muted); font-size:12px;">- ODER MANUELLER BARCODE -</div>
-                <div class="grid-2">
-                    <input type="text" id="manual-barcode" placeholder="Barcode eingeben">
+                <div class="grid-2" style="margin-top:12px;">
+                    <input type="text" id="manual-barcode" placeholder="Barcode">
                     <button class="btn-primary" onclick="lookupBarcode(document.getElementById('manual-barcode').value)">Suchen</button>
                 </div>
             </div>
@@ -482,7 +292,7 @@
                 <div class="grid-2" style="margin-bottom: 12px;">
                     <div class="stat-box"><div class="stat-lbl">Kcal / 100g</div><div class="stat-val" id="food-kcal" style="font-size:16px;">0</div></div>
                     <div class="form-group">
-                        <label>Gegessene Menge (g)</label>
+                        <label>Menge (g/ml)</label>
                         <input type="number" id="food-weight-input" value="100" oninput="recalculateScannedMacros()">
                     </div>
                 </div>
@@ -495,38 +305,70 @@
             </div>
 
             <div class="card">
+                <div class="card-title">Eigenes Essen eintragen <button class="btn-secondary" style="width:auto; padding:4px 8px; margin:0; font-size:12px;" onclick="toggleElement('custom-food-form')">Öffnen</button></div>
+                <div id="custom-food-form" style="display:none; margin-top:12px;">
+                    <input type="text" id="cf-name" placeholder="Name" class="form-group">
+                    <div class="grid-2 form-group">
+                        <input type="number" id="cf-kcal" placeholder="Kcal">
+                        <input type="number" id="cf-p" placeholder="Protein (g)">
+                        <input type="number" id="cf-c" placeholder="Carbs (g)">
+                        <input type="number" id="cf-f" placeholder="Fett (g)">
+                    </div>
+                    <button class="btn-primary" onclick="addCustomFood()">Speichern</button>
+                </div>
+            </div>
+
+            <div class="card">
                 <div class="card-title">Heute gegessen</div>
                 <div id="food-log-list"></div>
             </div>
         </div>
 
         <div id="view-settings" class="view">
+            
             <div class="card">
-                <div class="card-title">Design & Farbschema</div>
-                <div class="form-group">
-                    <label>Wähle deinen Style</label>
-                    <select id="setting-colorway" onchange="changeColorway(this.value)">
-                        <option value="default">Standard (Dunkelblau)</option>
-                        <option value="light">Clean Light (Hell)</option>
-                        <option value="amoled">Amoled Black (Tiefschwarz)</option>
-                        <option value="emerald">Nordic Emerald (Dunkelgrün)</option>
-                        <option value="cyber">Cyber Neon (Türkis/Pink)</option>
-                        <option value="crimson">Crimson Velvet (Dunkelrot)</option>
-                        <option value="amber">Amber Gold (Orange/Gelb)</option>
-                        <option value="mint">Forest Mint (Minzgrün)</option>
-                        <option value="cyan">Light Cyan (Helles Türkis)</option>
-                    </select>
+                <div class="card-title">Tages-Ziele</div>
+                <div class="grid-2">
+                    <div>
+                        <label>Kalorienziel (Kcal)</label>
+                        <input type="number" id="set-kcal" onchange="saveGoalSettings()">
+                    </div>
+                    <div>
+                        <label>Wasserziel (ml)</label>
+                        <input type="number" id="set-water" onchange="saveGoalSettings()">
+                    </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">App-Verwaltung</div>
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    Falls du Änderungen auf GitHub hochgeladen hast, kannst du hier das Update erzwingen. Deine gespeicherten Daten bleiben sicher in der IndexedDB.
-                </p>
-                <button class="btn-secondary" style="border-color: var(--accent-warning); color: var(--accent-warning); background: transparent;" onclick="updateApp()">
-                    🔄 App-Update erzwingen
-                </button>
+                <div class="card-title">Substanzen & Haltbarkeit</div>
+                <label>Füge Medikamente und deren Haltbarkeit in Wochen (nach Anmischen/Öffnen) hinzu.</label>
+                <div class="grid-2 form-group">
+                    <input type="text" id="new-med-name" placeholder="Name">
+                    <input type="number" id="new-med-weeks" placeholder="Wochen">
+                </div>
+                <button class="btn-secondary" style="margin-top:0; margin-bottom:12px;" onclick="addMedication()">Hinzufügen</button>
+                <div id="med-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Einnahmeorte</div>
+                <div class="grid-2 form-group">
+                    <input type="text" id="new-loc-name" placeholder="Z.B. Oral, Schulter">
+                    <button class="btn-secondary" style="margin-top:0;" onclick="addLocation()">Hinzufügen</button>
+                </div>
+                <div id="loc-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Design & App</div>
+                <select id="setting-colorway" onchange="changeColorway(this.value)" class="form-group">
+                    <option value="default">Standard (Dunkelblau)</option>
+                    <option value="light">Clean Light (Hell)</option>
+                    <option value="amoled">Amoled Black (Tiefschwarz)</option>
+                    <option value="emerald">Nordic Emerald (Dunkelgrün)</option>
+                </select>
+                <button class="btn-danger" onclick="updateApp()">🔄 App-Cache leeren (Update erzwingen)</button>
             </div>
         </div>
 
@@ -534,66 +376,70 @@
 
     <nav class="bottom-nav">
         <button class="nav-item active" onclick="switchView('dashboard')">
-            <span class="nav-icon">📊</span>
-            <span>Dashboard</span>
+            <span class="nav-icon">📊</span><span>Dashboard</span>
         </button>
         <button class="nav-item" onclick="switchView('peptides')">
-            <span class="nav-icon">💉</span>
-            <span>Peptide</span>
+            <span class="nav-icon">💊</span><span>Logs</span>
         </button>
         <button class="nav-item" onclick="switchView('nutrition')">
-            <span class="nav-icon">🍏</span>
-            <span>Ernährung</span>
+            <span class="nav-icon">🍏</span><span>Essen</span>
         </button>
         <button class="nav-item" onclick="switchView('settings')">
-            <span class="nav-icon">⚙️</span>
-            <span>Optionen</span>
+            <span class="nav-icon">⚙️</span><span>Optionen</span>
         </button>
     </nav>
 
     <script>
-        // ================= NEW CLEAN DATABASE ENGINE (InjTrkDB) =================
+        // ================= CONFIG & SETTINGS =================
+        let appConfig = {
+            goalKcal: parseInt(localStorage.getItem('goal_kcal')) || 2500,
+            goalWater: parseInt(localStorage.getItem('goal_water')) || 3000,
+            meds: JSON.parse(localStorage.getItem('custom_meds')) || [
+                { name: "Retatrutid", expiryWeeks: 4 },
+                { name: "GHK-Cu", expiryWeeks: 4 }
+            ],
+            locations: JSON.parse(localStorage.getItem('custom_locations')) || [
+                "Bauch links", "Bauch rechts", "Oberschenkel L", "Oberschenkel R"
+            ]
+        };
+
+        function saveConfig() {
+            localStorage.setItem('goal_kcal', appConfig.goalKcal);
+            localStorage.setItem('goal_water', appConfig.goalWater);
+            localStorage.setItem('custom_meds', JSON.stringify(appConfig.meds));
+            localStorage.setItem('custom_locations', JSON.stringify(appConfig.locations));
+            renderSettings();
+            buildDynamicSelectors();
+        }
+
+        // ================= DATABASE ENGINE =================
         let db;
-        const dbRequest = indexedDB.open("InjTrkDB", 1);
+        const dbRequest = indexedDB.open("InjTrkDB_v2", 2); // Bumped version for safety
 
         dbRequest.onupgradeneeded = function(e) {
             let database = e.target.result;
-            if (!database.objectStoreNames.contains("vials")) {
-                database.createObjectStore("vials", { keyPath: "id", autoIncrement: true });
-            }
-            if (!database.objectStoreNames.contains("injections")) {
-                database.createObjectStore("injections", { keyPath: "id", autoIncrement: true });
-            }
-            if (!database.objectStoreNames.contains("weight")) {
-                database.createObjectStore("weight", { keyPath: "date" });
-            }
-            if (!database.objectStoreNames.contains("water")) {
-                database.createObjectStore("water", { keyPath: "date" });
-            }
-            if (!database.objectStoreNames.contains("nutrition")) {
-                database.createObjectStore("nutrition", { keyPath: "id", autoIncrement: true });
-            }
+            if (!database.objectStoreNames.contains("vials")) database.createObjectStore("vials", { keyPath: "id", autoIncrement: true });
+            if (!database.objectStoreNames.contains("injections")) database.createObjectStore("injections", { keyPath: "id", autoIncrement: true });
+            if (!database.objectStoreNames.contains("weight")) database.createObjectStore("weight", { keyPath: "date" });
+            if (!database.objectStoreNames.contains("water")) database.createObjectStore("water", { keyPath: "date" });
+            if (!database.objectStoreNames.contains("nutrition")) database.createObjectStore("nutrition", { keyPath: "id", autoIncrement: true });
         };
 
-        dbRequest.onsuccess = function(e) {
-            db = e.target.result;
-            initApp();
-        };
-
-        dbRequest.onerror = function(e) {
-            console.error("Database connection failed.");
-        };
+        dbRequest.onsuccess = function(e) { db = e.target.result; initApp(); };
+        dbRequest.onerror = function(e) { console.error("Database failed."); };
 
         let selectedInjectionSite = "";
         let currentScannedProduct = null; 
         let html5QrcodeScanner = null;
+        let weightChartInstance = null;
 
-        function getTodayDateStr() {
-            const today = new Date();
-            return today.toISOString().split('T')[0];
-        }
+        function getTodayDateStr() { return new Date().toISOString().split('T')[0]; }
 
         function initApp() {
+            document.getElementById('set-kcal').value = appConfig.goalKcal;
+            document.getElementById('set-water').value = appConfig.goalWater;
+            renderSettings();
+            buildDynamicSelectors();
             refreshDashboard();
             refreshVialsList();
             refreshInjectionsLog();
@@ -603,13 +449,9 @@
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
             document.getElementById(`view-${viewName}`).classList.add('active');
             event.currentTarget.classList.add('active');
-            
-            if (viewName !== 'nutrition') {
-                stopScanner();
-            }
+            if (viewName !== 'nutrition') stopScanner();
         }
 
         function toggleElement(id) {
@@ -617,7 +459,57 @@
             el.style.display = el.style.display === 'none' ? 'block' : 'none';
         }
 
-        // ================= VIAL MANAGER LOGIC =================
+        // ================= DYNAMIC UI BUILDERS =================
+        function buildDynamicSelectors() {
+            // Build Sites
+            const map = document.getElementById('dynamic-locations');
+            map.innerHTML = "";
+            appConfig.locations.forEach(loc => {
+                map.innerHTML += `<div class="site-btn" onclick="selectSite(this, '${loc}')">${loc}</div>`;
+            });
+            // Build Meds Selectors
+            const select = document.getElementById('vial-name');
+            select.innerHTML = "";
+            appConfig.meds.forEach(med => {
+                select.innerHTML += `<option value="${med.name}">${med.name} (${med.expiryWeeks} Wochen haltbar)</option>`;
+            });
+        }
+
+        function renderSettings() {
+            const mList = document.getElementById('med-list');
+            mList.innerHTML = "";
+            appConfig.meds.forEach((m, i) => {
+                mList.innerHTML += `<div class="list-item-config"><span>${m.name} (${m.expiryWeeks} W)</span> <button onclick="removeMed(${i})" style="width:auto; padding:2px 8px; background:none; border:none; color:var(--accent-danger);">X</button></div>`;
+            });
+
+            const lList = document.getElementById('loc-list');
+            lList.innerHTML = "";
+            appConfig.locations.forEach((l, i) => {
+                lList.innerHTML += `<div class="list-item-config"><span>${l}</span> <button onclick="removeLoc(${i})" style="width:auto; padding:2px 8px; background:none; border:none; color:var(--accent-danger);">X</button></div>`;
+            });
+        }
+
+        function saveGoalSettings() {
+            appConfig.goalKcal = parseInt(document.getElementById('set-kcal').value) || 2500;
+            appConfig.goalWater = parseInt(document.getElementById('set-water').value) || 3000;
+            saveConfig(); refreshDashboard();
+        }
+
+        function addMedication() {
+            let name = document.getElementById('new-med-name').value;
+            let weeks = parseInt(document.getElementById('new-med-weeks').value) || 4;
+            if(name) { appConfig.meds.push({name, expiryWeeks: weeks}); saveConfig(); document.getElementById('new-med-name').value = ""; }
+        }
+        function removeMed(i) { appConfig.meds.splice(i, 1); saveConfig(); }
+
+        function addLocation() {
+            let name = document.getElementById('new-loc-name').value;
+            if(name) { appConfig.locations.push(name); saveConfig(); document.getElementById('new-loc-name').value = ""; }
+        }
+        function removeLoc(i) { appConfig.locations.splice(i, 1); saveConfig(); }
+
+
+        // ================= VIAL / MEDS MANAGER =================
         function addVial() {
             const name = document.getElementById("vial-name").value;
             const total = parseFloat(document.getElementById("vial-total").value);
@@ -627,82 +519,89 @@
 
             if (!total || !current) return alert("Bitte Mengen eintragen");
 
-            let transaction = db.transaction(["vials"], "readwrite");
-            let store = transaction.objectStore("vials");
-            
             let vial = {
-                substance: name,
-                total_mg: total,
-                current_mg: current,
-                expiry_date: expiry || "Keins",
-                is_reconstituted: recon
+                substance: name, total_mg: total, current_mg: current,
+                expiry_date: expiry || "Keins", is_reconstituted: recon
             };
 
-            store.add(vial);
-            transaction.oncomplete = function() {
-                document.getElementById("add-vial-form").style.display = "none";
-                refreshVialsList();
+            let tx = db.transaction(["vials"], "readwrite");
+            tx.objectStore("vials").add(vial);
+            tx.oncomplete = function() { document.getElementById("add-vial-form").style.display = "none"; refreshVialsList(); };
+        }
+
+        function markReconstituted(id, substanceName) {
+            let medConfig = appConfig.meds.find(m => m.name === substanceName);
+            let weeks = medConfig ? medConfig.expiryWeeks : 4;
+            let expDate = new Date();
+            expDate.setDate(expDate.getDate() + (weeks * 7));
+            let expString = expDate.toISOString().split('T')[0];
+
+            let tx = db.transaction(["vials"], "readwrite");
+            let store = tx.objectStore("vials");
+            store.get(id).onsuccess = function(e) {
+                let vial = e.target.result;
+                vial.is_reconstituted = true;
+                vial.expiry_date = expString;
+                store.put(vial);
             };
+            tx.oncomplete = () => refreshVialsList();
         }
 
         function refreshVialsList() {
-            let transaction = db.transaction(["vials"], "readonly");
-            let store = transaction.objectStore("vials");
-            let request = store.getAll();
+            let tx = db.transaction(["vials"], "readonly");
+            let request = tx.objectStore("vials").getAll();
 
             request.onsuccess = function() {
-                const listContainer = document.getElementById("vials-list");
-                const selectElement = document.getElementById("inj-vial-select");
-                
-                listContainer.innerHTML = "";
-                selectElement.innerHTML = '<option value="">-- Vial Auswählen --</option>';
+                const list = document.getElementById("vials-list");
+                const select = document.getElementById("inj-vial-select");
+                list.innerHTML = "";
+                select.innerHTML = '<option value="">-- Auswählen --</option>';
 
                 let vials = request.result;
-                if(vials.length === 0) {
-                    listContainer.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Keine Vials im Kühlschrank.</p>";
-                }
+                if(vials.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Nichts im Lager.</p>";
 
                 vials.forEach(vial => {
                     let pct = (vial.current_mg / vial.total_mg) * 100;
+                    let isExp = (vial.expiry_date !== "Keins" && new Date(vial.expiry_date) < new Date());
+                    
                     let badgeClass = vial.is_reconstituted ? "badge-recon" : "badge-dry";
-                    let badgeText = vial.is_reconstituted ? "Angemischt" : "Trocken";
+                    let badgeText = vial.is_reconstituted ? "Aktiv" : "Trocken";
+                    if(isExp) { badgeClass = "badge-expired"; badgeText = "Abgelaufen"; }
 
-                    if (vial.expiry_date !== "Keins" && new Date(vial.expiry_date) < new Date()) {
-                        badgeClass = "badge-expired";
-                        badgeText = "Abgelaufen";
+                    let actionBtn = "";
+                    if(!vial.is_reconstituted) {
+                        actionBtn = `<button onclick="markReconstituted(${vial.id}, '${vial.substance}')" class="btn-primary" style="padding: 4px; font-size:11px; margin-top:8px;">Angemischt! (+ Haltbarkeit setzen)</button>`;
                     }
 
-                    listContainer.innerHTML += `
+                    list.innerHTML += `
                         <div class="vial-card">
-                            <span class="vial-badge ${badgeClass}">${badgeText}</span>
-                            <div style="font-weight:bold; color:#fff;">${vial.substance}</div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                                Restmenge: ${vial.current_mg.toFixed(2)} mg / ${vial.total_mg} mg
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div>
+                                    <span class="vial-badge ${badgeClass}">${badgeText}</span>
+                                    <div style="font-weight:bold; color:#fff;">${vial.substance}</div>
+                                </div>
+                                <button onclick="deleteVial(${vial.id})" style="width:auto; padding:4px 8px; background:transparent; border:1px solid var(--accent-danger); color:var(--accent-danger); border-radius:6px; font-size:11px;">Löschen</button>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted);">Ablaufdatum: ${vial.expiry_date}</div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: ${pct}%; background-color: var(--accent-success);"></div>
-                            </div>
-                            <button onclick="deleteVial(${vial.id})" style="position:absolute; bottom:12px; right:12px; width:auto; padding:2px 6px; font-size:10px; background:transparent; border-color:var(--accent-danger); color:var(--accent-danger);">Löschen</button>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">Rest: ${vial.current_mg.toFixed(2)} / ${vial.total_mg}</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Ablauf: ${vial.expiry_date}</div>
+                            <div class="progress-bar-container"><div class="progress-bar" style="width: ${pct}%; background-color: var(--accent-success);"></div></div>
+                            ${actionBtn}
                         </div>
                     `;
-
-                    if(vial.current_mg > 0) {
-                        selectElement.innerHTML += `<option value="${vial.id}">${vial.substance} (ID: ${vial.id} | Noch ${vial.current_mg.toFixed(2)}mg)</option>`;
-                    }
+                    if(vial.current_mg > 0) select.innerHTML += `<option value="${vial.id}">${vial.substance} (ID: ${vial.id} | Noch ${vial.current_mg.toFixed(2)})</option>`;
                 });
             };
         }
 
         function deleteVial(id) {
-            if(confirm("Möchtest du diese Vial wirklich aus dem Lager löschen?")) {
-                let transaction = db.transaction(["vials"], "readwrite");
-                transaction.objectStore("vials").delete(id);
-                transaction.oncomplete = () => { refreshVialsList(); refreshDashboard(); };
+            if(confirm("Löschen?")) {
+                let tx = db.transaction(["vials"], "readwrite");
+                tx.objectStore("vials").delete(id);
+                tx.oncomplete = () => { refreshVialsList(); refreshDashboard(); };
             }
         }
 
-        // ================= INJECTION TRACKER LOGIC =================
+        // ================= LOGGING =================
         function selectSite(element, siteName) {
             document.querySelectorAll('.site-btn').forEach(btn => btn.classList.remove('selected'));
             element.classList.add('selected');
@@ -713,9 +612,7 @@
             const vialId = parseInt(document.getElementById("inj-vial-select").value);
             const dose = parseFloat(document.getElementById("inj-dose").value);
 
-            if (!vialId || !dose || !selectedInjectionSite) {
-                return alert("Bitte Vial, Dosis und Einstichstelle wählen.");
-            }
+            if (!vialId || !dose || !selectedInjectionSite) return alert("Alle Felder ausfüllen!");
 
             let tx = db.transaction(["vials", "injections"], "readwrite");
             let vialStore = tx.objectStore("vials");
@@ -724,32 +621,17 @@
             vialStore.get(vialId).onsuccess = function(e) {
                 let vial = e.target.result;
                 if (!vial) return;
-
-                if (vial.current_mg < dose) {
-                    if(!confirm("Eingegebene Dosis ist größer als der Restbestand der Vial. Trotzdem buchen?")) return;
-                }
-
                 vial.current_mg = Math.max(0, vial.current_mg - dose);
                 vialStore.put(vial);
-
-                let logEntry = {
-                    timestamp: new Date().toLocaleString('de-DE'),
-                    substance: vial.substance,
-                    dosage_mg: dose,
-                    location: selectedInjectionSite
-                };
-                injStore.add(logEntry);
+                injStore.add({ timestamp: new Date().toLocaleString('de-DE'), substance: vial.substance, dosage_mg: dose, location: selectedInjectionSite });
             };
 
             tx.oncomplete = function() {
                 document.getElementById("inj-dose").value = "";
                 document.querySelectorAll('.site-btn').forEach(btn => btn.classList.remove('selected'));
                 selectedInjectionSite = "";
-                
-                refreshVialsList();
-                refreshInjectionsLog();
-                refreshDashboard();
-                alert("Injektion gespeichert!");
+                refreshVialsList(); refreshInjectionsLog(); refreshDashboard();
+                alert("Gespeichert!");
             };
         }
 
@@ -760,17 +642,13 @@
 
             tx.objectStore("injections").getAll().onsuccess = function(e) {
                 let logs = e.target.result.reverse();
-                if (logs.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Noch keine Injektionen erfasst.</p>";
-                logs.slice(0, 5).forEach(log => {
+                if (logs.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Noch keine Logs.</p>";
+                logs.slice(0, 8).forEach(log => {
                     list.innerHTML += `
                         <div class="log-item">
-                            <div>
-                                <b>${log.substance}</b> - ${log.dosage_mg} mg<br>
-                                <small style="color:var(--text-muted);">${log.timestamp}</small>
-                            </div>
+                            <div><b>${log.substance}</b> - ${log.dosage_mg}<br><small style="color:var(--text-muted);">${log.timestamp}</small></div>
                             <div style="color:var(--accent-primary); font-weight:600; align-self:center;">${log.location}</div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             };
         }
@@ -781,46 +659,34 @@
             if(!w) return;
             let tx = db.transaction(["weight"], "readwrite");
             tx.objectStore("weight").put({ date: getTodayDateStr(), weight_kg: w });
-            tx.oncomplete = function() {
-                refreshDashboard();
-                alert("Gewicht gespeichert.");
-            };
+            tx.oncomplete = function() { refreshDashboard(); alert("Gespeichert."); };
         }
 
         function addWater(amount) {
             let date = getTodayDateStr();
             let tx = db.transaction(["water"], "readwrite");
             let store = tx.objectStore("water");
-            
             store.get(date).onsuccess = function(e) {
                 let current = e.target.result ? e.target.result.amount_ml : 0;
-                store.put({ date: date, amount_ml: current + amount });
+                store.put({ date: date, amount_ml: Math.max(0, current + amount) }); // Verhindert negative Werte
             };
-
-            tx.oncomplete = function() {
-                refreshDashboard();
-            };
+            tx.oncomplete = () => refreshDashboard();
         }
 
-        // ================= BARCODE SCANNER (OPEN FOOD FACTS API) =================
+        function addCustomWater() {
+            let val = parseInt(document.getElementById('custom-water-input').value);
+            if(val) { addWater(val); document.getElementById('custom-water-input').value = ""; }
+        }
+
+        // ================= NUTRITION & HISTORY =================
         function startScanner() {
             document.getElementById("reader").style.display = "block";
             document.getElementById("btn-scan").style.display = "none";
             document.getElementById("btn-stop-scan").style.display = "block";
-
             html5QrcodeScanner = new Html5Qrcode("reader");
-            html5QrcodeScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText, decodedResult) => {
-                    stopScanner();
-                    lookupBarcode(decodedText);
-                },
-                (errorMessage) => { }
-            ).catch(err => {
-                alert("Kamerafehler: " + err);
-                stopScanner();
-            });
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } },
+                (text) => { stopScanner(); lookupBarcode(text); }, (err) => { }
+            ).catch(err => { alert("Kamerafehler"); stopScanner(); });
         }
 
         function stopScanner() {
@@ -829,50 +695,37 @@
                     document.getElementById("reader").style.display = "none";
                     document.getElementById("btn-scan").style.display = "block";
                     document.getElementById("btn-stop-scan").style.display = "none";
-                }).catch(err => console.log(err));
+                });
             }
         }
 
         function lookupBarcode(code) {
-            if(!code) return alert("Bitte Barcode eingeben.");
-            
-            document.getElementById("food-name-display").innerText = "Suche Produkt...";
+            if(!code) return;
+            document.getElementById("food-name-display").innerText = "Suche...";
             document.getElementById("food-result-card").style.display = "block";
 
             fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 1) {
-                        let p = data.product;
-                        let nut = p.nutriments;
-                        
+                        let nut = data.product.nutriments;
                         currentScannedProduct = {
-                            name: p.product_name || "Unbekanntes Lebensmittel",
+                            name: data.product.product_name || "Unbekannt",
                             kcal_100g: nut["energy-kcal_100g"] || 0,
                             protein_100g: nut["proteins_100g"] || 0,
                             carbs_100g: nut["carbohydrates_100g"] || 0,
                             fat_100g: nut["fat_100g"] || 0
                         };
-
                         document.getElementById("food-name-display").innerText = currentScannedProduct.name;
                         document.getElementById("food-kcal").innerText = Math.round(currentScannedProduct.kcal_100g);
                         recalculateScannedMacros();
-                    } else {
-                        alert("Produkt nicht gefunden.");
-                        document.getElementById("food-result-card").style.display = "none";
-                    }
-                })
-                .catch(err => {
-                    alert("Netzwerkfehler.");
-                    document.getElementById("food-result-card").style.display = "none";
-                });
+                    } else { alert("Nicht gefunden."); document.getElementById("food-result-card").style.display = "none"; }
+                }).catch(err => { alert("Fehler"); });
         }
 
         function recalculateScannedMacros() {
             if(!currentScannedProduct) return;
-            let weight = parseFloat(document.getElementById("food-weight-input").value) || 0;
-            let factor = weight / 100;
-
+            let factor = (parseFloat(document.getElementById("food-weight-input").value) || 0) / 100;
             document.getElementById("food-p").innerText = (currentScannedProduct.protein_100g * factor).toFixed(1);
             document.getElementById("food-c").innerText = (currentScannedProduct.carbs_100g * factor).toFixed(1);
             document.getElementById("food-f").innerText = (currentScannedProduct.fat_100g * factor).toFixed(1);
@@ -880,29 +733,34 @@
 
         function logScannedFood() {
             if(!currentScannedProduct) return;
-            let weight = parseFloat(document.getElementById("food-weight-input").value) || 0;
-            let factor = weight / 100;
+            let factor = (parseFloat(document.getElementById("food-weight-input").value) || 0) / 100;
+            saveFoodEntry(
+                currentScannedProduct.name,
+                Math.round(currentScannedProduct.kcal_100g * factor),
+                currentScannedProduct.protein_100g * factor,
+                currentScannedProduct.carbs_100g * factor,
+                currentScannedProduct.fat_100g * factor
+            );
+            document.getElementById("food-result-card").style.display = "none"; currentScannedProduct = null;
+        }
 
+        function addCustomFood() {
+            let n = document.getElementById('cf-name').value;
+            let k = parseFloat(document.getElementById('cf-kcal').value) || 0;
+            let p = parseFloat(document.getElementById('cf-p').value) || 0;
+            let c = parseFloat(document.getElementById('cf-c').value) || 0;
+            let f = parseFloat(document.getElementById('cf-f').value) || 0;
+            if(!n) return alert("Name fehlt");
+            saveFoodEntry(n, k, p, c, f);
+            toggleElement('custom-food-form');
+        }
+
+        function saveFoodEntry(name, kcal, p, c, f) {
             let tx = db.transaction(["nutrition"], "readwrite");
-            let store = tx.objectStore("nutrition");
-
-            let entry = {
-                date: getTodayDateStr(),
-                name: currentScannedProduct.name,
-                calories: Math.round(currentScannedProduct.kcal_100g * factor),
-                protein: currentScannedProduct.protein_100g * factor,
-                carbs: currentScannedProduct.carbs_100g * factor,
-                fat: currentScannedProduct.fat_100g * factor
-            };
-
-            store.add(entry);
-            tx.oncomplete = function() {
-                document.getElementById("food-result-card").style.display = "none";
-                currentScannedProduct = null;
-                refreshFoodLog();
-                refreshDashboard();
-                alert("Essen hinzugefügt!");
-            };
+            tx.objectStore("nutrition").add({
+                date: getTodayDateStr(), name: name, calories: kcal, protein: p, carbs: c, fat: f
+            });
+            tx.oncomplete = () => { refreshFoodLog(); refreshDashboard(); };
         }
 
         function refreshFoodLog() {
@@ -913,18 +771,46 @@
 
             tx.objectStore("nutrition").getAll().onsuccess = function(e) {
                 let items = e.target.result.filter(item => item.date === today).reverse();
-                if(items.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Heute noch nichts eingetragen.</p>";
-                
+                if(items.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Nichts eingetragen.</p>";
                 items.forEach(item => {
                     list.innerHTML += `
                         <div class="log-item">
-                            <div>
-                                <b>${item.name}</b><br>
-                                <small style="color:var(--text-muted);">P: ${item.protein.toFixed(1)}g | C: ${item.carbs.toFixed(1)}g | F: ${item.fat.toFixed(1)}g</small>
-                            </div>
+                            <div><b>${item.name}</b><br><small style="color:var(--text-muted);">P: ${item.protein.toFixed(1)} | C: ${item.carbs.toFixed(1)} | F: ${item.fat.toFixed(1)}</small></div>
                             <div style="font-weight:bold; align-self:center;">${item.calories} kcal</div>
-                        </div>
-                    `;
+                        </div>`;
+                });
+            };
+        }
+
+        function loadDietHistory() {
+            let tx = db.transaction(["nutrition"], "readonly");
+            let list = document.getElementById("history-list");
+            list.innerHTML = "Lade...";
+
+            tx.objectStore("nutrition").getAll().onsuccess = function(e) {
+                let all = e.target.result;
+                let grouped = {};
+                all.forEach(item => {
+                    if(!grouped[item.date]) grouped[item.date] = {kcal:0, p:0, c:0, f:0};
+                    grouped[item.date].kcal += item.calories;
+                    grouped[item.date].p += item.protein;
+                    grouped[item.date].c += item.carbs;
+                    grouped[item.date].f += item.fat;
+                });
+                
+                list.innerHTML = "";
+                let dates = Object.keys(grouped).sort().reverse();
+                if(dates.length === 0) list.innerHTML = "Keine Daten.";
+                dates.forEach(d => {
+                    let g = grouped[d];
+                    list.innerHTML += `
+                        <div class="list-item-config" style="display:block;">
+                            <div style="font-weight:bold; margin-bottom:4px; color:var(--accent-primary);">${d}</div>
+                            <div style="display:flex; justify-content:space-between; color:var(--text-muted);">
+                                <span>${g.kcal} Kcal</span>
+                                <span>P: ${Math.round(g.p)}g | C: ${Math.round(g.c)}g | F: ${Math.round(g.f)}g</span>
+                            </div>
+                        </div>`;
                 });
             };
         }
@@ -935,22 +821,22 @@
             let today = getTodayDateStr();
 
             let txWeight = db.transaction(["weight"], "readonly");
-            txWeight.objectStore("weight").get(today).onsuccess = function(e) {
-                if(e.target.result) {
-                    document.getElementById("dash-weight").innerText = e.target.result.weight_kg + " kg";
-                    document.getElementById("quick-weight-input").value = e.target.result.weight_kg;
-                } else {
-                    txWeight.objectStore("weight").getAll().onsuccess = function(ev) {
-                        let all = ev.target.result;
-                        document.getElementById("dash-weight").innerText = all.length > 0 ? all[all.length-1].weight_kg + " kg" : "-- kg";
-                    };
+            txWeight.objectStore("weight").getAll().onsuccess = function(ev) {
+                let all = ev.target.result;
+                document.getElementById("dash-weight").innerText = all.length > 0 ? all[all.length-1].weight_kg + " kg" : "-- kg";
+                
+                // Update Graph
+                if(all.length > 0) {
+                    let labels = all.slice(-14).map(d => d.date.substring(5)); // last 14 entries, MM-DD
+                    let data = all.slice(-14).map(d => d.weight_kg);
+                    renderWeightChart(labels, data);
                 }
             };
 
             let txWater = db.transaction(["water"], "readonly");
             txWater.objectStore("water").get(today).onsuccess = function(e) {
                 let amount = e.target.result ? e.target.result.amount_ml : 0;
-                document.getElementById("dash-water").innerText = amount + " / 3000 ml";
+                document.getElementById("dash-water").innerText = amount + " / " + appConfig.goalWater + " ml";
             };
 
             let txInj = db.transaction(["injections"], "readonly");
@@ -965,16 +851,10 @@
             let txNut = db.transaction(["nutrition"], "readonly");
             txNut.objectStore("nutrition").getAll().onsuccess = function(e) {
                 let todayItems = e.target.result.filter(item => item.date === today);
-                
                 let totKcal = 0, totP = 0, totC = 0, totF = 0;
-                todayItems.forEach(i => {
-                    totKcal += i.calories;
-                    totP += i.protein;
-                    totC += i.carbs;
-                    totF += i.fat;
-                });
+                todayItems.forEach(i => { totKcal += i.calories; totP += i.protein; totC += i.carbs; totF += i.fat; });
 
-                document.getElementById("dash-kcal").innerText = `${totKcal} / 2500 kcal`;
+                document.getElementById("dash-kcal").innerText = `${totKcal} / ${appConfig.goalKcal}`;
                 document.getElementById("dash-p").innerText = `${Math.round(totP)}g`;
                 document.getElementById("dash-c").innerText = `${Math.round(totC)}g`;
                 document.getElementById("dash-f").innerText = `${Math.round(totF)}g`;
@@ -985,104 +865,45 @@
             };
         }
 
-        function updateApp() {
-            if (confirm("Möchtest du den App-Cache leeren und die PWA neu laden? Deine gespeicherten Daten (Gewicht, Logs etc.) bleiben dabei sicher erhalten!")) {
-                
-                if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                        for (let name of names) {
-                            caches.delete(name);
-                        }
-                    });
-                }
-                
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                        for(let registration of registrations) {
-                            registration.unregister();
-                        }
-                    });
-                }
+        function renderWeightChart(labels, data) {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim();
+            if(weightChartInstance) weightChartInstance.destroy();
+            weightChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ label: 'kg', data: data, borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 3 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#9ca3af' } }, x: { ticks: { color: '#9ca3af' } } } }
+            });
+        }
 
-                alert("Cache gelöscht. Die App wird jetzt neu gestartet...");
+        // ================= CACHE & THEME =================
+        function updateApp() {
+            if (confirm("Möchtest du den App-Cache leeren? Deine Daten in der Datenbank bleiben erhalten!")) {
+                if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
+                if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+                alert("Cache gelöscht. Neustart...");
                 window.location.reload(true);
             }
         }
 
-        // Funktion zum Wechseln der Farbschemata im Live-Betrieb
         function changeColorway(theme) {
             const root = document.documentElement;
-            
-            // Themes definieren
             const themes = {
-                default: {
-                    '--bg-primary': '#0b0f19', '--bg-secondary': '#171e30', '--bg-tertiary': '#232d45',
-                    '--accent-primary': '#0056ff', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#ef4444', '--text-main': '#f3f4f6', '--text-muted': '#9ca3af', '--border-color': '#2e3b5e'
-                },
-                light: {
-                    '--bg-primary': '#f8fafc', '--bg-secondary': '#ffffff', '--bg-tertiary': '#f1f5f9',
-                    '--accent-primary': '#0056ff', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#ef4444', '--text-main': '#0f172a', '--text-muted': '#64748b', '--border-color': '#e2e8f0'
-                },
-                amoled: {
-                    '--bg-primary': '#000000', '--bg-secondary': '#121212', '--bg-tertiary': '#1e1e1e',
-                    '--accent-primary': '#3b82f6', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#ef4444', '--text-main': '#ffffff', '--text-muted': '#a3a3a3', '--border-color': '#262626'
-                },
-                emerald: {
-                    '--bg-primary': '#0a0f0d', '--bg-secondary': '#141f1b', '--bg-tertiary': '#1d2c27',
-                    '--accent-primary': '#059669', '--accent-success': '#34d399', '--accent-warning': '#fbbf24',
-                    '--accent-danger': '#f87171', '--text-main': '#f0fdf4', '--text-muted': '#86efac', '--border-color': '#2d423b'
-                },
-                cyber: {
-                    '--bg-primary': '#060814', '--bg-secondary': '#0e132b', '--bg-tertiary': '#171f44',
-                    '--accent-primary': '#00f2fe', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#ff0055', '--text-main': '#ffffff', '--text-muted': '#707fa4', '--border-color': '#1e295d'
-                },
-                crimson: {
-                    '--bg-primary': '#0f0909', '--bg-secondary': '#1a1111', '--bg-tertiary': '#2a1b1b',
-                    '--accent-primary': '#ef4444', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#b91c1c', '--text-main': '#fca5a5', '--text-muted': '#f87171', '--border-color': '#3b2525'
-                },
-                amber: {
-                    '--bg-primary': '#0f0909', '--bg-secondary': '#1a1612', '--bg-tertiary': '#26211a',
-                    '--accent-primary': '#f59e0b', '--accent-success': '#10b981', '--accent-warning': '#fbbf24',
-                    '--accent-danger': '#ef4444', '--text-main': '#fef3c7', '--text-muted': '#f59e0b', '--border-color': '#383026'
-                },
-                mint: {
-                    '--bg-primary': '#0b0f19', '--bg-secondary': '#151b17', '--bg-tertiary': '#202923',
-                    '--accent-primary': '#10b981', '--accent-success': '#34d399', '--accent-warning': '#fbbf24',
-                    '--accent-danger': '#f87171', '--text-main': '#ecfdf5', '--text-muted': '#a7f3d0', '--border-color': '#2b3a30'
-                },
-                cyan: {
-                    '--bg-primary': '#f4fbfb', '--bg-secondary': '#ffffff', '--bg-tertiary': '#e6f7f7',
-                    '--accent-primary': '#00a8a8', '--accent-success': '#10b981', '--accent-warning': '#f59e0b',
-                    '--accent-danger': '#ef4444', '--text-main': '#0c2525', '--text-muted': '#4a6b6b', '--border-color': '#ccefee'
-                }
+                default: { '--bg-primary': '#0b0f19', '--bg-secondary': '#171e30', '--bg-tertiary': '#232d45', '--accent-primary': '#0056ff', '--accent-success': '#10b981', '--accent-warning': '#f59e0b', '--accent-danger': '#ef4444', '--text-main': '#f3f4f6', '--text-muted': '#9ca3af', '--border-color': '#2e3b5e' },
+                light: { '--bg-primary': '#f8fafc', '--bg-secondary': '#ffffff', '--bg-tertiary': '#f1f5f9', '--accent-primary': '#0056ff', '--accent-success': '#10b981', '--accent-warning': '#f59e0b', '--accent-danger': '#ef4444', '--text-main': '#0f172a', '--text-muted': '#64748b', '--border-color': '#e2e8f0' },
+                amoled: { '--bg-primary': '#000000', '--bg-secondary': '#121212', '--bg-tertiary': '#1e1e1e', '--accent-primary': '#3b82f6', '--accent-success': '#10b981', '--accent-warning': '#f59e0b', '--accent-danger': '#ef4444', '--text-main': '#ffffff', '--text-muted': '#a3a3a3', '--border-color': '#262626' },
+                emerald: { '--bg-primary': '#0a0f0d', '--bg-secondary': '#141f1b', '--bg-tertiary': '#1d2c27', '--accent-primary': '#059669', '--accent-success': '#34d399', '--accent-warning': '#fbbf24', '--accent-danger': '#f87171', '--text-main': '#f0fdf4', '--text-muted': '#86efac', '--border-color': '#2d423b' }
             };
-
-            const selectedTheme = themes[theme] || themes.default;
-            
-            // CSS Variablen im Dokument überschreiben
-            for (let [key, value] of Object.entries(selectedTheme)) {
-                root.style.setProperty(key, value);
-            }
-            
-            // Auswahl im LocalStorage merken, damit das Design beim nächsten Start bleibt
+            const selected = themes[theme] || themes.default;
+            for (let [key, value] of Object.entries(selected)) root.style.setProperty(key, value);
             localStorage.setItem('selectedColorway', theme);
+            if(weightChartInstance) refreshDashboard(); // Redraw chart to match theme color
         }
 
-        // Beim Starten der App das gespeicherte Theme laden
         window.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('selectedColorway');
-            if (savedTheme) {
-                document.getElementById('setting-colorway').value = savedTheme;
-                changeColorway(savedTheme);
-            }
+            if (savedTheme) { document.getElementById('setting-colorway').value = savedTheme; changeColorway(savedTheme); }
         });
-
-
     </script>
 </body>
 </html>
