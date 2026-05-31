@@ -398,6 +398,15 @@
             </div>
 
             <div class="card">
+                <div class="card-title">Daten-Backup & Sync</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="exportData()" class="btn">Daten exportieren</button>
+                            <button onclick="document.getElementById('importFile').click()" class="btn">Daten importieren</button>
+                        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+                    </div>
+            </div>
+
+            <div class="card">
                 <div class="card-title">Substanzen & Haltbarkeit</div>
                 <label>Füge Medikamente und deren Haltbarkeit in Wochen (nach Anmischen/Öffnen) hinzu.</label>
                 <div class="grid-2 form-group">
@@ -1153,6 +1162,48 @@
             const savedTheme = localStorage.getItem('selectedColorway');
             if (savedTheme) { document.getElementById('setting-colorway').value = savedTheme; changeColorway(savedTheme); }
         });
+
+        function exportData() {
+            let transaction = db.transaction(["vials", "injections", "weight", "water", "nutrition"], "readonly");
+            let data = {};
+            let pending = 5;
+
+            ["vials", "injections", "weight", "water", "nutrition"].forEach(store => {
+                transaction.objectStore(store).getAll().onsuccess = (e) => {
+                    data[store] = e.target.result;
+                    pending--;
+                    if (pending === 0) {
+                        let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                        let url = URL.createObjectURL(blob);
+                        let a = document.createElement("a");
+                        a.href = url;
+                        a.download = `injtrk_backup_${new Date().toISOString().slice(0,10)}.json`;
+                        a.click();
+                    }
+                };
+            });
+        }
+
+        function importData(event) {
+            let file = event.target.files[0];
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let importedData = JSON.parse(e.target.result);
+                let transaction = db.transaction(["vials", "injections", "weight", "water", "nutrition"], "readwrite");
+                
+                Object.keys(importedData).forEach(store => {
+                    let objectStore = transaction.objectStore(store);
+                    objectStore.clear(); // Bestehende Daten löschen
+                    importedData[store].forEach(item => objectStore.add(item));
+                });
+                
+                transaction.oncomplete = () => {
+                    alert("Daten erfolgreich importiert!");
+                    location.reload(); // App neu laden
+                };
+            };
+            reader.readAsText(file);
+}
     </script>
 </body>
 </html>
