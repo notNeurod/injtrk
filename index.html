@@ -2,6 +2,309 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>InjTrk Pro</title>
+    
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "InjTrk Pro",
+        "short_name": "InjTrk",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#121212",
+        "theme_color": "#1e1e1e",
+        "orientation": "portrait"
+    }'>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-active { color: #3b82f6; }
+        /* Versteckt den Scanner-Standard-Input von html5-qrcode */
+        #reader button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        #reader img { display: none; }
+    </style>
+</head>
+<body class="font-sans pb-24 selection:bg-blue-500/30">
+
+    <header class="sticky top-0 bg-[#1e1e1e] border-b border-gray-800 p-4 z-40 flex justify-between items-center shadow-md">
+        <h1 class="text-xl font-bold tracking-wider text-blue-500 flex items-center gap-2">
+            <i data-lucide="activity"></i> InjTrk <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-mono">v2.0</span>
+        </h1>
+        <div id="quick-status" class="text-xs text-gray-400">Offline-Modus</div>
+    </header>
+
+    <main class="p-4 max-w-lg mx-auto">
+        
+        <section id="page-dashboard" class="page-view space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 relative overflow-hidden">
+                    <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Gewicht</p>
+                    <p id="dash-weight" class="text-2xl font-bold mt-1 text-white">--.- <span class="text-sm font-normal text-gray-400">kg</span></p>
+                    <input type="number" id="weight-input" step="0.1" placeholder="0.0" class="mt-2 w-full bg-[#121212] border border-gray-700 rounded p-1 text-center text-sm focus:outline-none focus:border-blue-500">
+                    <button onclick="saveWeight()" class="w-full mt-1 bg-gray-800 hover:bg-gray-700 text-xs py-1 rounded transition">Eintragen</button>
+                </div>
+
+                <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-semibold tracking-wider">Wasser (Ziel: 3L)</p>
+                        <p id="dash-water" class="text-2xl font-bold mt-1 text-blue-400">0 <span class="text-sm font-normal text-gray-400">ml</span></p>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-1.5 my-2">
+                        <div id="water-bar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1">
+                        <button onclick="addWater(250)" class="bg-blue-950/40 border border-blue-900/50 text-blue-400 text-[10px] py-1 rounded hover:bg-blue-900/30">+250</button>
+                        <button onclick="addWater(500)" class="bg-blue-950/40 border border-blue-900/50 text-blue-400 text-[10px] py-1 rounded hover:bg-blue-900/30">+500</button>
+                        <button onclick="addWater(750)" class="bg-blue-950/40 border border-blue-900/50 text-blue-400 text-[10px] py-1 rounded hover:bg-blue-900/30">+750</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 space-y-4">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase">Ernährung Heute</h3>
+                <div class="text-center py-2">
+                    <span id="dash-kcal" class="text-4xl font-extrabold text-green-400">0</span>
+                    <span class="text-xs text-gray-400 block mt-1">kcal gesamt</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-gray-800/60">
+                    <div class="bg-[#121212] p-2 rounded border border-red-900/20">
+                        <span class="text-red-400 font-bold block" id="dash-protein">0g</span> Protein
+                    </div>
+                    <div class="bg-[#121212] p-2 rounded border border-amber-900/20">
+                        <span class="text-amber-400 font-bold block" id="dash-carbs">0g</span> Kohlenhyd.
+                    </div>
+                    <div class="bg-[#121212] p-2 rounded border border-yellow-900/20">
+                        <span class="text-yellow-500 font-bold block" id="dash-fat">0g</span> Fett
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase mb-3">Letzte Logs</h3>
+                <div id="dash-recent-logs" class="space-y-2 text-xs">
+                    </div>
+            </div>
+        </section>
+
+
+        <section id="page-peptides" class="page-view hidden space-y-6">
+            <details class="bg-[#1e1e1e] border border-gray-800 rounded-xl overflow-hidden group">
+                <summary class="p-4 font-semibold cursor-pointer flex justify-between items-center select-none bg-[#242424]">
+                    <span>+ Neue Vial anlegen</span>
+                    <i data-lucide="chevron-down" class="group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <form id="vial-form" onsubmit="addVial(event)" class="p-4 space-y-3 border-t border-gray-800">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Substanz</label>
+                            <input type="text" id="vial-substance" placeholder="z.B. Reta, GHK-Cu" required class="w-full bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Ablaufdatum</label>
+                            <input type="date" id="vial-expiry" required class="w-full bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Gesamtmenge (mg)</label>
+                            <input type="number" id="vial-total" step="0.1" required class="w-full bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex items-end">
+                            <label class="w-full flex items-center justify-center gap-2 bg-[#121212] border border-gray-700 rounded p-2 text-sm cursor-pointer select-none">
+                                <input type="checkbox" id="vial-recon" class="accent-blue-500">
+                                <span>Bereits Rekonstituiert</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm transition">Vial Speichern</button>
+                </form>
+            </details>
+
+            <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 space-y-4">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase">Injektion loggen</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Aktive Vial wählen</label>
+                        <select id="inj-vial-select" class="w-full bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                            </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Dosis (mg)</label>
+                        <input type="number" id="inj-dosage" step="0.01" placeholder="0.00" class="w-full bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-xs text-gray-400 block mb-2">Einstichstelle (Rotations-Planer)</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-center" id="rotation-planner">
+                        <button type="button" onclick="selectLocation('Bauch L')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Bauch Links</button>
+                        <button type="button" onclick="selectLocation('Bauch R')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Bauch Rechts</button>
+                        <button type="button" onclick="selectLocation('Oberschenkel L')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Oberschenkel L</button>
+                        <button type="button" onclick="selectLocation('Oberschenkel R')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Oberschenkel R</button>
+                        <button type="button" onclick="selectLocation('Gesäß L')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Gesäß Links</button>
+                        <button type="button" onclick="selectLocation('Gesäß R')" class="loc-btn bg-[#121212] border border-gray-700 p-2 rounded hover:border-blue-500 transition">Gesäß Rechts</button>
+                    </div>
+                </div>
+
+                <button onclick="saveInjection()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded text-sm transition">Injektion verbuchen (- mg)</button>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase">Dein Peptid-Lager</h3>
+                <div id="vial-list" class="space-y-3">
+                    </div>
+            </div>
+        </section>
+
+
+        <section id="page-nutrition" class="page-view hidden space-y-4">
+            <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 space-y-3">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+                    <i data-lucide="camera" class="text-blue-500"></i> Barcode Live-Scan
+                </h3>
+                <div id="reader" class="overflow-hidden rounded-lg border border-gray-800 bg-[#121212]"></div>
+                <div class="flex gap-2">
+                    <button onclick="startScanner()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-xs font-bold py-2 rounded transition">Scanner Starten</button>
+                    <button onclick="stopScanner()" class="bg-gray-800 hover:bg-gray-700 text-xs px-3 rounded transition">Stop</button>
+                </div>
+            </div>
+
+            <div id="api-result-card" class="bg-[#1e1e1e] p-4 rounded-xl border border-blue-900/40 hidden space-y-3 animate-pulse-once">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 id="food-name" class="font-bold text-white text-base">Produkt-Name</h4>
+                        <p class="text-xs text-gray-400">Werte pro 100g</p>
+                    </div>
+                    <button onclick="document.getElementById('api-result-card').classList.add('hidden')" class="text-gray-500 hover:text-white">&times;</button>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-1 text-center text-xs bg-[#121212] p-2 rounded border border-gray-800">
+                    <div><span class="block font-bold text-green-400" id="api-kcal">0</span>kcal</div>
+                    <div><span class="block font-bold text-red-400" id="api-p">0g</span>Prot</div>
+                    <div><span class="block font-bold text-amber-400" id="api-c">0g</span>KH</div>
+                    <div><span class="block font-bold text-yellow-500" id="api-f">0g</span>Fett</div>
+                </div>
+
+                <div class="flex gap-2 items-center pt-2">
+                    <input type="number" id="food-amount" placeholder="Menge in Gramm" class="flex-1 bg-[#121212] border border-gray-700 rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                    <button onclick="calculateAndSaveFood()" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2.5 px-4 rounded transition">Hinzufügen</button>
+                </div>
+            </div>
+
+            <details class="bg-[#1e1e1e] border border-gray-800 rounded-xl overflow-hidden group">
+                <summary class="p-4 font-semibold cursor-pointer flex justify-between items-center select-none bg-[#242424] text-xs">
+                    <span>Manuelle Mahlzeit eintragen</span>
+                    <i data-lucide="chevron-down" class="group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <form onsubmit="saveManualFood(event)" class="p-4 space-y-3 border-t border-gray-800 text-xs">
+                    <input type="text" id="man-name" placeholder="Name der Mahlzeit" required class="w-full bg-[#121212] border border-gray-700 rounded p-2 focus:outline-none focus:border-blue-500">
+                    <div class="grid grid-cols-4 gap-2">
+                        <input type="number" id="man-kcal" placeholder="Kcal" required class="bg-[#121212] border border-gray-700 rounded p-2 text-center">
+                        <input type="number" id="man-p" placeholder="Prot(g)" required class="bg-[#121212] border border-gray-700 rounded p-2 text-center">
+                        <input type="number" id="man-c" placeholder="KH(g)" required class="bg-[#121212] border border-gray-700 rounded p-2 text-center">
+                        <input type="number" id="man-f" placeholder="Fett(g)" required class="bg-[#121212] border border-gray-700 rounded p-2 text-center">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Eintragen</button>
+                </form>
+            </details>
+
+            <div class="bg-[#1e1e1e] p-4 rounded-xl border border-gray-800 space-y-2">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-300 uppercase">Heutige Lebensmittel</h3>
+                <div id="food-list" class="space-y-2 text-xs">
+                    </div>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#1e1e1e] border-t border-gray-800 px-6 py-2 z-50 shadow-xl max-w-lg mx-auto flex justify-between items-center">
+        <button onclick="switchPage('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-gray-500 nav-active transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Dashboard</span>
+        </button>
+        <button onclick="switchPage('peptides')" id="nav-peptides" class="flex flex-col items-center gap-1 text-gray-500 transition">
+            <i data-lucide="syringe" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Peptide</span>
+        </button>
+        <button onclick="switchPage('nutrition')" id="nav-nutrition" class="flex flex-col items-center gap-1 text-gray-500 transition">
+            <i data-lucide="apple" class="w-5 h-5"></i>
+            <span class="text-[10px] font-medium">Ernährung</span>
+        </button>
+    </nav>
+
+    <script>
+        // Globaler State
+        let db;
+        let selectedLocationString = "";
+        let currentScannerInstance = null;
+        let activeScannedProduct = null;
+
+        // Hilfsfunktion: Aktuelles Datum als YYYY-MM-DD
+        const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+        // 1. DATABASE INITIALISIERUNG (InjTrkDB)
+        const initDB = () => {
+            const request = indexedDB.open("InjTrkDB", 1);
+
+            request.onupgradeneeded = (event) => {
+                const database = event.target.result;
+                
+                if (!database.objectStoreNames.contains("vials")) {
+                    database.createObjectStore("vials", { keyPath: "id", autoIncrement: true });
+                }
+                if (!database.objectStoreNames.contains("injections")) {
+                    database.createObjectStore("injections", { keyPath: "id", autoIncrement: true });
+                }
+                if (!database.objectStoreNames.contains("weight")) {
+                    database.createObjectStore("weight", { keyPath: "date" });
+                }
+                if (!database.objectStoreNames.contains("water")) {
+                    database.createObjectStore("water", { keyPath: "date" });
+                }
+                if (!database.objectStoreNames.contains("nutrition")) {
+                    database.createObjectStore("nutrition", { keyPath: "id", autoIncrement: true });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                console.log("InjTrkDB erfolgreich initialisiert.");
+                refreshAllData();
+            };
+
+            request.onerror = (e) => console.error("Datenbankfehler:", e);
+        };
+
+        // 2. SEITENWECHSEL-NAVIGATION
+        const switchPage = (pageId) => {
+            document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById(`nav-${pageId}`).classList.add('nav-active');
+
+            if(pageId !== 'nutrition') stopScanner();
+        };
+
+        // 3. REFRE<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InjTrk</title>
     <!-- Web App Manifest for PWA installation -->
