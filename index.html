@@ -471,17 +471,29 @@
 
         // ================= DATABASE ENGINE =================
         let db;
-        const dbRequest = indexedDB.open("InjTrkDB_v2", 2); 
+        const dbRequest = indexedDB.open("InjTrkDB_v2", 3); 
 
         dbRequest.onupgradeneeded = function(e) {
-            let database = e.target.result;
-            if (!database.objectStoreNames.contains("vials")) database.createObjectStore("vials", { keyPath: "id", autoIncrement: true });
-            if (!database.objectStoreNames.contains("injections")) database.createObjectStore("injections", { keyPath: "id", autoIncrement: true });
-            if (!database.objectStoreNames.contains("weight")) database.createObjectStore("weight", { keyPath: "date" });
-            if (!database.objectStoreNames.contains("water")) database.createObjectStore("water", { keyPath: "date" });
-            if (!database.objectStoreNames.contains("nutrition")) database.createObjectStore("nutrition", { keyPath: "id", autoIncrement: true });
-        };
+        let database = e.target.result;
+    
+        // Bestehende Stores löschen, falls vorhanden (Reset-Logik)
+        const stores = ["vials", "injections", "weight", "water", "nutrition"];
+        stores.forEach(storeName => {
+            if (database.objectStoreNames.contains(storeName)) {
+                database.deleteObjectStore(storeName);
+            }
+        });
 
+        // Stores frisch neu erstellen
+        database.createObjectStore("vials", { keyPath: "id", autoIncrement: true });
+        database.createObjectStore("injections", { keyPath: "id", autoIncrement: true });
+        database.createObjectStore("weight", { keyPath: "date" });
+        database.createObjectStore("water", { keyPath: "date" });
+        database.createObjectStore("nutrition", { keyPath: "id", autoIncrement: true });
+    
+        console.log("Datenbank wurde erfolgreich zurückgesetzt.");
+        };
+        
         dbRequest.onsuccess = function(e) { db = e.target.result; initApp(); };
         dbRequest.onerror = function(e) { console.error("Database failed."); };
 
