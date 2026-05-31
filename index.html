@@ -129,6 +129,40 @@
         .macro-flex { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
         
         .list-item-config { display: flex; justify-content: space-between; background: var(--bg-primary); padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; border: 1px solid var(--border-color); align-items: center;}
+
+        /* Heatmap Styles (Theme-dynamisch) */
+        .heatmap-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 12px;
+        }
+        .heatmap-box {
+            width: 14px;
+            height: 14px;
+            background-color: var(--bg-tertiary);
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        /* Dynamische Farb-Level (basierend auf der --accent-primary Variable) */
+        .heatmap-box[data-level="1"] { 
+            background-color: color-mix(in srgb, var(--accent-primary) 30%, transparent); 
+            border-color: color-mix(in srgb, var(--accent-primary) 20%, transparent); 
+        }
+        .heatmap-box[data-level="2"] { 
+            background-color: color-mix(in srgb, var(--accent-primary) 60%, transparent); 
+            border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent); 
+        }
+        .heatmap-box[data-level="3"] { 
+            background-color: color-mix(in srgb, var(--accent-primary) 85%, transparent); 
+            border-color: color-mix(in srgb, var(--accent-primary) 70%, transparent); 
+        }
+        .heatmap-box[data-level="4"] { 
+            background-color: var(--accent-primary); 
+            border-color: var(--accent-primary); 
+        }
+
     </style>
 </head>
 <body>
@@ -197,6 +231,20 @@
                 <div class="grid-2">
                     <input type="number" id="custom-water-input" placeholder="Eigene Menge (ml)">
                     <button class="btn-secondary" style="margin-top:0;" onclick="addCustomWater()">Hinzufügen</button>
+                </div>
+            </div>
+
+            <!-- Heatmap Karte -->
+            <div class="card">
+                <div class="card-title">Injektions-Aktivität (52 Wochen)</div>
+                <div id="heatmap-container" class="heatmap-grid"></div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 10px; display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
+                    Weniger 
+                    <div style="width:10px; height:10px; border-radius:2px; background:var(--bg-tertiary);"></div>
+                    <div style="width:10px; height:10px; border-radius:2px; background:color-mix(in srgb, var(--accent-primary) 30%, transparent);"></div>
+                    <div style="width:10px; height:10px; border-radius:2px; background:color-mix(in srgb, var(--accent-primary) 85%, transparent);"></div>
+                    <div style="width:10px; height:10px; border-radius:2px; background:var(--accent-primary);"></div>
+                    Mehr
                 </div>
             </div>
 
@@ -388,7 +436,7 @@
             <span class="nav-icon">📊</span><span>Dashboard</span>
         </button>
         <button class="nav-item" onclick="switchView('peptides')">
-            <span class="nav-icon">💊</span><span>Logs</span>
+            <span class="nav-icon">💊</span><span>Meds</span>
         </button>
         <button class="nav-item" onclick="switchView('nutrition')">
             <span class="nav-icon">🍏</span><span>Essen</span>
@@ -903,6 +951,58 @@
             });
         }
 
+        function renderHeatmap() {
+            if (!db) return;
+            let tx = db.transaction(["injections"], "readonly");
+            tx.objectStore("injections").getAll().onsuccess = function(e) {
+                let logs = e.target.result;
+                let heatmapData = new Array(52).fill(0); // Array für 52 Wochen
+                
+                // Aktuelles Datum für die Berechnung (Mitternacht, damit es präzise ist)
+                let today = new Date();
+                today.setHours(0,0,0,0);
+
+                logs.forEach(log => {
+                    // Datum aus deutschem String "TT.MM.JJJJ, HH:MM:SS" extrahieren
+                    let parts = log.timestamp.split(',')[0].split('.'); 
+                    if(parts.length === 3) {
+                        let logDate = new Date(parts[2], parts[1]-1, parts[0]);
+                        logDate.setHours(0,0,0,0);
+                        
+                        // Differenz in Tagen berechnen
+                        let diffTime = today - logDate;
+                        let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        // Wenn es innerhalb des letzten Jahres liegt (52 * 7 = 364 Tage)
+                        if (diffDays >= 0 && diffDays <= 364) { 
+                            let weekIndex = 51 - Math.floor(diffDays / 7);
+                            if (weekIndex >= 0 && weekIndex < 52) {
+                                heatmapData[weekIndex]++;
+                            }
+                        }
+                    }
+                });
+
+                let container = document.getElementById('heatmap-container');
+                container.innerHTML = "";
+                
+                // Die 52 Wochen-Boxen zeichnen
+                heatmapData.forEach((count, index) => {
+                    let box = document.createElement('div');
+                    box.className = 'heatmap-box';
+                    // Optional: Tooltip, wenn man auf dem Handy lange drückt / am PC drüber fährt
+                    let weeksAgo = 51 - index;
+                    box.title = count === 0 
+                        ? `Vor ${weeksAgo} Woche(n): Keine Einträge` 
+                        : `Vor ${weeksAgo} Woche(n): ${count} Injektion(en)`;
+                    
+                    // Maximal Level 4 für die dunkelste Farbe
+                    box.setAttribute('data-level', Math.min(count, 4));
+                    container.appendChild(box);
+                });
+            };
+        }
+
         function updateCharts() {
             if (!db) return;
             let tx = db.transaction(["weight", "water", "nutrition"], "readonly");
@@ -992,6 +1092,7 @@
             };
 
             updateCharts();
+            renderHeatmap();
         }
 
         // ================= CACHE & THEME =================
