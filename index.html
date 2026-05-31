@@ -711,6 +711,21 @@
             }
         }
 
+        function deleteFood(id) {
+    if(confirm("Möchtest du diesen Eintrag wirklich löschen?")) {
+        let tx = db.transaction(["nutrition"], "readwrite");
+        tx.objectStore("nutrition").delete(id);
+        tx.oncomplete = () => { 
+            refreshFoodLog(); 
+            refreshDashboard(); 
+            // Falls die Historie gerade offen ist, auch diese updaten
+            if (document.getElementById('history-modal').style.display === 'block') {
+                loadDietHistory();
+                        }
+                    };
+                }
+            }
+
         function lookupBarcode(code) {
             if(!code) return;
             document.getElementById("food-name-display").innerText = "Suche...";
@@ -782,17 +797,25 @@
             let today = getTodayDateStr();
 
             tx.objectStore("nutrition").getAll().onsuccess = function(e) {
-                let items = e.target.result.filter(item => item.date === today).reverse();
-                if(items.length === 0) list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Nichts eingetragen.</p>";
-                items.forEach(item => {
-                    list.innerHTML += `
-                        <div class="log-item">
-                            <div><b>${item.name}</b><br><small style="color:var(--text-muted);">P: ${item.protein.toFixed(1)} | C: ${item.carbs.toFixed(1)} | F: ${item.fat.toFixed(1)}</small></div>
-                            <div style="font-weight:bold; align-self:center;">${item.calories} kcal</div>
-                        </div>`;
-                });
-            };
-        }
+            let items = e.target.result.filter(item => item.date === today).reverse();
+            if(items.length === 0) {
+                list.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Nichts eingetragen.</p>";
+                return;
+            }
+        
+        items.forEach(item => {
+            list.innerHTML += `
+                <div class="log-item" style="align-items: center;">
+                    <div style="flex-grow: 1;">
+                        <b>${item.name}</b><br>
+                        <small style="color:var(--text-muted);">P: ${item.protein.toFixed(1)} | C: ${item.carbs.toFixed(1)} | F: ${item.fat.toFixed(1)}</small>
+                    </div>
+                    <div style="font-weight:bold; margin-right: 12px;">${item.calories} kcal</div>
+                    <button onclick="deleteFood(${item.id})" style="width:auto; padding:4px 8px; background:transparent; border:1px solid var(--accent-danger); color:var(--accent-danger); border-radius:6px; font-size:11px;">Löschen</button>
+                </div>`;
+        });
+    };
+}
 
         function loadDietHistory() {
             let tx = db.transaction(["nutrition"], "readonly");
