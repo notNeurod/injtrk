@@ -338,6 +338,7 @@
                     <div class="stat-lbl">Wasser</div>
                     <div class="stat-val" id="dash-water">0 / 3000 ml</div>
                 </div>
+
                 <div class="stat-box">
                     <div class="stat-lbl">Gewicht</div>
                     <div class="stat-val" id="dash-weight">-- kg</div>
@@ -385,7 +386,11 @@
                 </div>
             </div>
         </div>
-
+        <label style="margin-top: 14px;">App-Version verwalten</label>
+                <button class="btn-secondary" style="margin-top: 4px; border-color: var(--accent-warning); color: var(--accent-warning);" onclick="updateApp()">
+                    🔄 App-Update erzwingen
+                </button>
+                </div>
         <!-- ================= PEPTIDES VIEW ================= -->
         <div id="view-peptides" class="view">
             <!-- Inject Form -->
@@ -948,6 +953,30 @@
                 document.getElementById("bar-c").style.width = `${Math.min(100, (totC / 250) * 100)}%`;
                 document.getElementById("bar-f").style.width = `${Math.min(100, (totF / 80) * 100)}%`;
             };
+        }
+        
+        function updateApp() {
+            if (confirm("Möchtest du den App-Cache leeren und die PWA neu laden? Deine gespeicherten Daten (Gewicht, Logs etc.) bleiben dabei sicher erhalten!")) {
+                
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        for (let name of names) {
+                            caches.delete(name);
+                        }
+                    });
+                }
+                
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+                }
+
+                alert("Cache gelöscht. Die App wird jetzt neu gestartet...");
+                window.location.reload(true);
+            }
         }
     </script>
 </body>
